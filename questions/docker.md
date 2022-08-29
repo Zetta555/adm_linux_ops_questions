@@ -38,142 +38,14 @@ Docker - программное обеспечение для автоматиз
 
 <details>
   <summary>Ответ</summary>
+Обе инструкции (ENTRYPOINT и CMD) имеют две формы SHELL и EXEC. Обе могут быть переопределены при запуске контейнера из командной строки.  Если при запуске образа задана только одна команда ENTRYPOINT или CMD  то она определяет главный процесс контейнера, который должен быть запущен при старте. Техническое отличие ENTRYPOINT и CMD только в правилах объединения аргументов, если в запущенном контейнере заданы обе инструкции (они могут быть заданы в порядке приоритета: в командной строке doker, Dokerfile запускаемого образа, Dokerfile образа на основе которого создан запускаемый и далее по иерархии). Методологически ENTRYPOINT лучше использовать для неизменной базовой части команды, а CMD для параметров, так как их проще переопределить из командной строки. 
 
-Инструкции CMD и ENTRYPOINT выполняются в момент запуска контейнера, тольо инструкция CMD позволяет переопределить передаваемые команде аргументы.
+- Используйте ENTRYPOINT, если вы не хотите, чтобы разработчики изменяли исполняемый файл, который запускается при запуске контейнера. Вы можете представлять, что ваш контейнер – исполняемая оболочка. Хорошей стратегией будет определить стабильную комбинацию параметров и исполняемого файла как ENTRYPOINT. Для нее вы можете (не обязательно) указать аргументы CMD по умолчанию, доступные другим разработчикам для переопределения.
 
-**Пример 1. CMD:**
-Опишем сборку образа в Dockerfile.
-```
-FROM alpine  
-CMD ["ping", "8.8.8.8"]  
-```
-В инструкцию CMD передаются 2 аргумента. Выполним сборку образа `docker build -t test .` и запустим контейнер.
-```
-$ docker run test
-PING 8.8.8.8 (8.8.8.8): 56 data bytes
-64 bytes from 8.8.8.8: seq=0 ttl=43 time=32.976 ms
-64 bytes from 8.8.8.8: seq=1 ttl=43 time=31.998 ms
-64 bytes from 8.8.8.8: seq=2 ttl=43 time=31.843 ms
---- 8.8.8.8 ping statistics ---
-3 packets transmitted, 3 packets received, 0% packet loss
-round-trip min/avg/max = 31.708/33.316/36.823 ms
-```
-Теперь передадим 2 новых аргумента для запуска контейнера.
-```
-$ docker run test traceroute 1.1.1.1
-traceroute to 1.1.1.1 (1.1.1.1), 30 hops max, 46 byte packets
- 1  172.17.0.1 (172.17.0.1)  0.017 ms  0.016 ms  0.009 ms
- 2  192.168.168.1 (192.168.168.1)  0.996 ms  1.553 ms  2.069 ms
- 3  *  *  *
- 4  lag-2-435.bgw01.samara.ertelecom.ru (85.113.62.125)  1.454 ms  1.427 ms  1.984 ms
- 5  172.68.8.3 (172.68.8.3)  19.685 ms  15.722 ms  15.565 ms
- 6  172.68.8.2 (172.68.8.2)  15.846 ms  22.696 ms  35.093 ms
- 7  one.one.one.one (1.1.1.1)  17.439 ms  17.670 ms  24.202 ms
-```
-`ping` заменен на traceroute, IP адрес заменен на 1.1.1.1.
-
-**Пример 2. ENTRYPOINT:**
-Опишем сборку образа в Dockerfile.
-```
-FROM alpine  
-ENTRYPOINT ["ping", "8.8.8.8"]
-```
-В инструкцию ENTRYPOINT передаются 2 аргумента. Выполним сборку образа `docker build -t test .` и запустим контейнер.
-```
-$ docker run test2
-PING 8.8.8.8 (8.8.8.8): 56 data bytes
-64 bytes from 8.8.8.8: seq=0 ttl=43 time=36.189 ms
-64 bytes from 8.8.8.8: seq=1 ttl=43 time=44.120 ms
-64 bytes from 8.8.8.8: seq=2 ttl=43 time=44.584 ms
-^C
---- 8.8.8.8 ping statistics ---
-3 packets transmitted, 3 packets received, 0% packet loss
-round-trip min/avg/max = 36.189/41.631/44.584 ms
-```
-Теперь передадим изменим один из аргументов для запуска контейнера.
-```
-$ docker run test2 ping 1.1.1.1
-BusyBox v1.31.1 () multi-call binary.
-
-Usage: ping [OPTIONS] HOST
-
-Send ICMP ECHO_REQUEST packets to network hosts
-
-	-4,-6		Force IP or IPv6 name resolution
-	-c CNT		Send only CNT pings
-	-s SIZE		Send SIZE data bytes in packets (default 56)
-	-i SECS		Interval
-	-A		Ping as soon as reply is recevied
-	-t TTL		Set TTL
-	-I IFACE/IP	Source interface or IP address
-	-W SEC		Seconds to wait for the first response (default 10)
-			(after all -c CNT packets are sent)
-	-w SEC		Seconds until ping exits (default:infinite)
-			(can exit earlier with -c CNT)
-	-q		Quiet, only display output at start
-			and when finished
-	-p HEXBYTE	Pattern to use for payload
-```
-Как видим, аргумент передать контейнеру нельзя.
-
-**Пример 3. ENTRYPOINT и CMD:**
-Опишем сборку образа в Dockerfile.
-```
-FROM alpine  
-ENTRYPOINT ["ping"]
-CMD ["8.8.8.8"]
-```
-В инструкцию ENTRYPOINT передаётся аргумент `ping`, в CMD передаётся аргумент 8.8.8.8. Выполним сборку образа `docker build -t test .` и запустим контейнер.
-```
-$ docker run test3
-PING 8.8.8.8 (8.8.8.8): 56 data bytes
-64 bytes from 8.8.8.8: seq=0 ttl=43 time=41.176 ms
-64 bytes from 8.8.8.8: seq=1 ttl=43 time=32.875 ms
-64 bytes from 8.8.8.8: seq=2 ttl=43 time=40.395 ms
-^C
---- 8.8.8.8 ping statistics ---
-3 packets transmitted, 3 packets received, 0% packet loss
-round-trip min/avg/max = 32.875/38.148/41.176 ms
-```
-Пробуем изменить 2 аргумента.
-```
-$ docker run test3 traceroute 1.1.1.1
-BusyBox v1.31.1 () multi-call binary.
-
-Usage: ping [OPTIONS] HOST
-
-Send ICMP ECHO_REQUEST packets to network hosts
-
-	-4,-6		Force IP or IPv6 name resolution
-	-c CNT		Send only CNT pings
-	-s SIZE		Send SIZE data bytes in packets (default 56)
-	-i SECS		Interval
-	-A		Ping as soon as reply is recevied
-	-t TTL		Set TTL
-	-I IFACE/IP	Source interface or IP address
-	-W SEC		Seconds to wait for the first response (default 10)
-			(after all -c CNT packets are sent)
-	-w SEC		Seconds until ping exits (default:infinite)
-			(can exit earlier with -c CNT)
-	-q		Quiet, only display output at start
-			and when finished
-	-p HEXBYTE	Pattern to use for payload
-```
-Изменить 2 аргумента невозможно. Заменим аргумент инструкции CMD.
-```
-$ docker run test3 1.1.1.1    
-PING 1.1.1.1 (1.1.1.1): 56 data bytes
-64 bytes from 1.1.1.1: seq=0 ttl=58 time=31.412 ms
-64 bytes from 1.1.1.1: seq=1 ttl=58 time=19.400 ms
-64 bytes from 1.1.1.1: seq=2 ttl=58 time=15.814 ms
-^C
---- 1.1.1.1 ping statistics ---
-3 packets transmitted, 3 packets received, 0% packet loss
-round-trip min/avg/max = 15.814/22.208/31.412 ms
-```
-При такой сборке образа команды ENTRYPOINT и CMD при запуске контейнера будут запущены последовательно, но аргумент возможно изменить только для CMD.
+- Используйте только CMD (без определения ENTRYPOINT), если требуется, чтобы разработчики могли легко переопределять исполняемый файл. Если точка входа определена, исполняемый файл все равно можно переопределить, используя флаг --entrypoint. Но для разработчиков будет гораздо удобнее добавлять желаемую команду в конце строки docker run.
 
 </details>
+
 
 4. Чем отличается *COPY* от *ADD* в Dockerfile?
 
@@ -199,3 +71,29 @@ round-trip min/avg/max = 15.814/22.208/31.412 ms
 
 
 </details>
+
+6. Eсть докерфайл, сколько будет весить образ?
+```sh
+FROM alpine
+COPY 1gb.file . 
+RUN chmod +x 1gb.file 
+```
+<details>
+  <summary>Ответ</summary>
+
+Образ будет весить 2гб, так как в COPY мы копируем в контейнер файл размером 1гб, задавая размер образа 1гб + размер образа alpine и в инструкции RUN изменяем слой 
+созданный слой - файл 1gb.file делаем исполняемым, что добавляет новый слой, размером 1гб.  
+Из этого следует, что размер финального образа 2гб + размер alpine.
+
+</details>  
+
+7. Что такое cgroups и namespace?
+
+<details>
+  <summary>Ответ</summary>
+
+- namespace это функция ядра Linux, позволяющая изолировать и виртуализировать глобальные системные ресурсы множества процессов. Примеры ресурсов, которые можно виртуализировать: ID процессов, имена хостов, ID пользователей, доступ к сетям, межпроцессное взаимодействие и файловые системы. Пространство имен дает процессам, запущенным в контейнерах, иллюзию, что они имеют свои собственные ресурсы.
+
+- cgoups - группа процессов , для которой механизмами ядра наложена изоляция и установлены ограничения на некоторые вычислительные ресурсы (процессорные, сетевые, ресурсы памяти, ресурсы ввода-вывода). 
+
+</details> 
