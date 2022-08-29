@@ -6,13 +6,14 @@
 1. [Linux. Basic](questions/linux.basic.md)
 2. [Linux. Main+](questions/linux.mainPlus.md)
 3. [Теория DevOps](questions/theoryDevOps.md)
-4. [Git](questions/git.md)
-5. [CI/CD](questions/cicd.md)
-6. [Terraform](questions/terraform.md)
-7. [Docker](questions/docker.md)
-8. [Ansible](questions/ansible.md)
-9. [Kubernetes / Openshift](questions/kubernetes.md)
-10. [Тестовые практические задания](questions/practice.md)
+4. [Базы данных](questions/databases.md)
+5. [Git](questions/git.md)
+6. [CI/CD](questions/cicd.md)
+7. [Terraform](questions/terraform.md)
+8. [Docker](questions/docker.md)
+9. [Ansible](questions/ansible.md)
+10. [Kubernetes / Openshift](questions/kubernetes.md)
+11. [Тестовые практические задания](questions/practice.md)
 
 ---
 
